@@ -1,0 +1,51 @@
+name: Feature request
+description: Propose an improvement and describe the problem it solves.
+title: "[Feature] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search existing issues first. Small, concrete requests are easier to discuss.
+        Keep personal information, actual ride data and device identifiers out of this public form.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation and who would benefit.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Desired behavior
+      description: Describe what the user would do and what the app should do in response.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: What would success look like?
+      description: Give a concrete example or acceptance criteria.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe existing workarounds or other approaches, if any.
+  - type: textarea
+    id: impact
+    attributes:
+      label: Controller or privacy impact
+      description: Does this change resistance, incline, ride recovery, saved data, networking or permissions? None or unsure is a valid answer.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues for this request.
+          required: true
+        - label: I removed personal details and used only fictional data in any examples or images.
+          required: true

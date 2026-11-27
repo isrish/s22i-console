@@ -9,7 +9,12 @@ import sys
 import tokenize
 
 
-ROOT_FILES = {"README.md", "AGENTS.md", "LICENSE", ".gitignore", "docs/PROTOCOL.md", "docs/assets/icon-prompt.txt", ".github/workflows/ci.yml"}
+ROOT_FILES = {
+    "README.md", "AGENTS.md", "CONTRIBUTING.md", "LICENSE", ".gitignore",
+    "docs/PROTOCOL.md", "docs/assets/icon-prompt.txt", ".github/workflows/ci.yml",
+    ".github/pull_request_template.md", ".github/ISSUE_TEMPLATE/feature_request.yml",
+    ".github/ISSUE_TEMPLATE/bug_report.yml", ".github/ISSUE_TEMPLATE/config.yml",
+}
 REVIEWED_IMAGES = {
     "docs/assets/dashboard.png": "5c45f603892669b6bfe0543194a50d4c01e57752c51913f72ba7363119d43804",
     "docs/assets/ride-summary.png": "881c80221609a6b1366c4ea5b444366e9eb2017b32ab1f9dd2d8b02cadde110d",

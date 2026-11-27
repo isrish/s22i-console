@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="#download">Download</a> · <a href="#features">Features</a> · <a href="#build">Build</a> · <a href="#install-and-use">Install</a> · <a href="AGENTS.md">Developer guide</a>
+  <a href="#download">Download</a> · <a href="#features">Features</a> · <a href="#build">Build</a> · <a href="#install-and-use">Install</a> · <a href="CONTRIBUTING.md">Contribute</a> · <a href="AGENTS.md">Developer guide</a>
 </p>
 
 ![S22i Console dashboard with power, cadence, ride timer, resistance and incline controls](docs/assets/dashboard.png)
@@ -116,6 +116,14 @@ python3 scripts/check_publication.py
 See [AGENTS.md](AGENTS.md) for architecture, verification commands and maintenance constraints.
 
 </details>
+
+## Contributing
+
+Code, documentation, accessibility improvements and ideas are welcome. Start with the [contribution guide](CONTRIBUTING.md) for setup, testing and the pull request workflow.
+
+[Request a feature](https://github.com/isrish/s22i-console/issues/new?template=feature_request.yml) · [Report a bug](https://github.com/isrish/s22i-console/issues/new?template=bug_report.yml) · [Browse open issues](https://github.com/isrish/s22i-console/issues)
+
+You can contribute without bike hardware. Keep examples synthetic and describe clearly what has and has not been tested on a real controller.
 
 ## Attribution and license
 

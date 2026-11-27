@@ -2,7 +2,7 @@
 
 ## Start here
 
-Read `README.md`, `docs/PROTOCOL.md`, `app/AndroidManifest.xml`, then the files relevant to the change. This is a native Java Android app, not a web app or Gradle project. Package `dev.s22i.console`, version 0.8.0, minimum and target API 28; compilation uses SDK 34. Python scripts invoke the Android build tools directly.
+Read `README.md`, `CONTRIBUTING.md`, `docs/PROTOCOL.md`, `app/AndroidManifest.xml`, then the files relevant to the change. This is a native Java Android app, not a web app or Gradle project. Package `dev.s22i.console`, version 0.8.0, minimum and target API 28; compilation uses SDK 34. Python scripts invoke the Android build tools directly.
 
 The repository is the public source distribution. Never depend on excluded local inventories, logs, experiment notes or signing keys. Do not commit personal paths, network addresses, device serials, authentication material, actual ride records, screenshots of user activity or downloaded APKs. README artwork and screenshots of empty state or synthetic sample previews are permitted after visual and metadata review. Source files intentionally contain no explanatory comments; maintain architecture and protocol rationale in these documents. Retain all third-party legal notices.
 
