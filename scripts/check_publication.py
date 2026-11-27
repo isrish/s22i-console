@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import ast
+import hashlib
 import io
 from pathlib import PurePosixPath
 import re
@@ -8,7 +9,12 @@ import sys
 import tokenize
 
 
-ROOT_FILES = {"README.md", "AGENTS.md", "LICENSE", ".gitignore", "docs/PROTOCOL.md", ".github/workflows/ci.yml"}
+ROOT_FILES = {"README.md", "AGENTS.md", "LICENSE", ".gitignore", "docs/PROTOCOL.md", "docs/assets/icon-prompt.txt", ".github/workflows/ci.yml"}
+REVIEWED_IMAGES = {
+    "docs/assets/dashboard.png": "5c45f603892669b6bfe0543194a50d4c01e57752c51913f72ba7363119d43804",
+    "docs/assets/ride-summary.png": "881c80221609a6b1366c4ea5b444366e9eb2017b32ab1f9dd2d8b02cadde110d",
+    "docs/assets/s22i-icon.png": "b6fbc3be24d62342b49bc043f9f2b458a5a0741462a1edf90c317adcce912340",
+}
 PATTERNS = {
     "personal home path": re.compile(r"/(?:Users|home)/[A-Za-z0-9_.-]+|[A-Za-z]:\\Users\\", re.I),
     "IPv4 address": re.compile(r"(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w.])"),
@@ -22,7 +28,7 @@ JAVA_TOKENS = re.compile(r'''"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|//[^\n]*|/\*[\s
 
 def allowed(path):
     p = PurePosixPath(path)
-    if path in ROOT_FILES:
+    if path in ROOT_FILES or path in REVIEWED_IMAGES:
         return True
     if ".." in p.parts:
         return False
@@ -40,6 +46,10 @@ def findings(path, data, mode="100644"):
         issues.append("non-regular file")
     if not allowed(path):
         issues.append("path outside the public source allowlist")
+    if path in REVIEWED_IMAGES:
+        if not data.startswith(b"\x89PNG\r\n\x1a\n") or hashlib.sha256(data).hexdigest() != REVIEWED_IMAGES[path]:
+            issues.append("image differs from the visually reviewed public asset")
+        return issues
     try:
         text = data.decode("utf-8")
     except UnicodeDecodeError:

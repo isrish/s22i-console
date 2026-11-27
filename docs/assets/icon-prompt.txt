@@ -1,0 +1,4 @@
+Generator: built-in imagegen
+Purpose: README artwork; not a replacement for the installed launcher icon.
+
+Create a polished square app icon for S22i Console, an indoor cycling Android dashboard. A bold acid-lime stationary exercise bike symbol with a circular flywheel and a small integrated cadence pulse, centered on a deep charcoal-green rounded-square tile. Minimal premium sports-tech style, restrained subtle depth and soft edge lighting, crisp generous negative space, readable at small sizes. Palette matches a dark charcoal and electric-lime fitness dashboard. No letters, no numbers, no watermark, no third-party brand marks. One icon, front view of the tile, no surrounding scene.

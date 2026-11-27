@@ -1,6 +1,8 @@
 import importlib.util
+import hashlib
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 
 spec = importlib.util.spec_from_file_location("publication", Path(__file__).resolve().parents[1] / "scripts/check_publication.py")
@@ -9,6 +11,15 @@ spec.loader.exec_module(publication)
 
 
 class PublicationTests(unittest.TestCase):
+    def test_only_exact_reviewed_images_are_allowed(self):
+        data = b"\x89PNG\r\n\x1a\nsynthetic-test-bytes"
+        path = "docs/assets/example.png"
+        with patch.dict(publication.REVIEWED_IMAGES, {path: hashlib.sha256(data).hexdigest()}):
+            self.assertEqual([], publication.findings(path, data))
+            self.assertIn("image differs from the visually reviewed public asset", publication.findings(path, data + b"changed"))
+            self.assertIn("non-regular file", publication.findings(path, data, "120000"))
+        self.assertIn("path outside the public source allowlist", publication.findings(path, data))
+
     def test_source_and_synthetic_values_are_allowed(self):
         self.assertEqual([], publication.findings("app/src/dev/s22i/console/Example.java", b'package demo; class Example { int field = 26; String url = "https://example.org"; }'))
 

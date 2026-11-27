@@ -1,17 +1,40 @@
-# S22i Console
+<p align="center">
+  <img src="docs/assets/s22i-icon.png" width="128" height="128" alt="S22i Console cycling icon">
+</p>
 
-An offline Android console for NordicTrack S22i bikes with a compatible FitPro USB controller. Native Java, no Gradle and no downloaded app libraries. Package: `dev.s22i.console`. Current version: **0.8.0**.
+<h1 align="center">S22i Console</h1>
+
+<p align="center"><strong>Your ride. Your rhythm.</strong><br>An offline Android dashboard for compatible NordicTrack S22i bikes.</p>
+
+<p align="center">
+  <strong>Android 9+</strong> · <strong>Native Java</strong> · <strong>Offline</strong> · <strong>Apache-2.0</strong>
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> · <a href="#build">Build</a> · <a href="#install-and-use">Install</a> · <a href="AGENTS.md">Developer guide</a>
+</p>
+
+![S22i Console dashboard with power, cadence, ride timer, resistance and incline controls](docs/assets/dashboard.png)
+
+<p align="center"><sub>Version 0.8.0 · Clean dashboard, disconnected · No personal ride data</sub></p>
 
 ## Features
 
-- Live power, cadence, speed, incline and reported magnetic resistance level.
-- Explicit Start/End ride, elapsed time, estimated distance and whole-ride graphs.
-- A full-width overlay for viewing ride statistics while using another app.
-- A completed-ride summary with a photo view and optional date/time.
-- Tap-to-wake dim mode and configurable inactivity dimming, defaulting to 30 minutes.
-- Private ride storage and an idle-only deletion control in Settings.
+| During your ride | While watching | After your ride |
+| --- | --- | --- |
+| Power, cadence, speed and reported resistance | Full-width floating statistics panel | Distance, time, averages and peaks |
+| Ride timer and estimated distance | Whole-ride graphs above another app | A photo-friendly ride summary |
+| Explicit Start and End ride | Swipe to reveal; tap an arrow to fold | Optional date/time and private storage |
 
-The app has no Internet permission, analytics, accounts or cloud upload. Summary dates are hidden by default. Screenshots are created by the user; the app does not post or share them automatically.
+Tap-to-wake dim mode keeps the console comfortable between rides. Auto-dim defaults to 30 minutes and can be changed in Settings.
+
+### A ride worth remembering
+
+![S22i Console sample ride summary showing distance, elapsed time, power, cadence and a full-ride graph](docs/assets/ride-summary.png)
+
+<p align="center"><sub>Actual app preview using synthetic sample data. No real ride or personal timestamp is shown.</sub></p>
+
+The app has no Internet permission, analytics, accounts or cloud upload. Summary dates are hidden by default, and nothing is posted or shared automatically.
 
 ## Compatibility and control limits
 
@@ -22,6 +45,11 @@ The bike uses magnetic resistance. `Gear` in internal protocol names refers to f
 Connection alone does not start a workout. Manual adjustments require fresh validated state, and actuator writes are never automatically retried. Read [protocol constraints](docs/PROTOCOL.md) before changing controller code.
 
 ## Build
+
+Native Java, no Gradle and no downloaded app libraries. Package: `dev.s22i.console`.
+
+<details>
+<summary><strong>Toolchain, signing and build commands</strong></summary>
 
 Install Python 3.9+, JDK 17 and Android SDK command-line tools. Set `JAVA_HOME` to your JDK and `ANDROID_HOME` to your SDK; Java tools can also be found on `PATH`. Install the pinned SDK components:
 
@@ -42,6 +70,8 @@ For a **first installation only**, supply those credentials and run `python3 scr
 
 The default output is `build/s22i-console-release.apk`, signed, alignment-checked and non-debuggable. `python3 scripts/build.py --debug` builds a separate development APK with a local debug identity when no signing overrides are set. Neither command installs anything.
 
+</details>
+
 ## Install and use
 
 Enable USB debugging on your own console and authorize your computer. Select the intended device explicitly using `adb devices -l`, then set `S22I_SERIAL` locally to that device's serial or network endpoint.
@@ -57,9 +87,12 @@ Tap **Connect bike** and grant USB access if prompted. Start a ride explicitly. 
 
 ## Privacy and development
 
+<details>
+<summary><strong>Privacy guarantees and contributor checks</strong></summary>
+
 Production builds disable diagnostic recording and Android `run-as` access. Debug builds offer explicitly opt-in private diagnostics while disconnected; identity/authentication payloads are redacted. Do not publish diagnostic recordings or real ride data. Android backups are disabled. This does not replace device-level Android or ADB security.
 
-Only source, resources, synthetic tests, build tools and documentation belong in this repository. Local device inventories, experiment histories, captures, signing keys, APKs and third-party app downloads are excluded. Run the publication check after staging changes:
+Only source, resources, synthetic tests, build tools, documentation and specifically reviewed README images belong in this repository. Local device inventories, experiment histories, captures, signing keys, APKs and third-party app downloads are excluded. Run the publication check after staging changes:
 
 ```sh
 python3 scripts/check_publication.py
@@ -67,6 +100,17 @@ python3 scripts/check_publication.py
 
 See [AGENTS.md](AGENTS.md) for architecture, verification commands and maintenance constraints.
 
+</details>
+
 ## Attribution and license
 
 Licensed under Apache-2.0; see [LICENSE](LICENSE). The protocol implementation adapts work from [STRIDE](https://github.com/keranm/strideApp) and [Hyperborea](https://github.com/ball2jh/Hyperborea). Original license texts, notices, pinned revisions and adaptation details are retained in [app/assets/licenses](app/assets/licenses/README.txt). No iFit applications, firmware or third-party media APKs are distributed here. NordicTrack and iFit are trademarks of their respective owners; this project is independent.
+
+<details>
+<summary>About these images</summary>
+
+The dashboard and summary are screenshots of version 0.8.0 running in a separate documentation installation with empty storage. The summary uses the app's built-in sample preview. No controller connection or real ride was used for these images.
+
+The README icon was generated with built-in imagegen to match the app's charcoal-and-lime palette. The [generation prompt](docs/assets/icon-prompt.txt) is included. The installed Android launcher icon is unchanged.
+
+</details>

@@ -4,7 +4,7 @@
 
 Read `README.md`, `docs/PROTOCOL.md`, `app/AndroidManifest.xml`, then the files relevant to the change. This is a native Java Android app, not a web app or Gradle project. Package `dev.s22i.console`, version 0.8.0, minimum and target API 28; compilation uses SDK 34. Python scripts invoke the Android build tools directly.
 
-The repository is the public source distribution. Never depend on excluded local inventories, logs, experiment notes or signing keys. Do not commit personal paths, network addresses, device serials, authentication material, actual ride records, screenshots of user activity or downloaded APKs. Source files intentionally contain no explanatory comments; maintain architecture and protocol rationale in these documents. Retain all third-party legal notices.
+The repository is the public source distribution. Never depend on excluded local inventories, logs, experiment notes or signing keys. Do not commit personal paths, network addresses, device serials, authentication material, actual ride records, screenshots of user activity or downloaded APKs. README artwork and screenshots of empty state or synthetic sample previews are permitted after visual and metadata review. Source files intentionally contain no explanatory comments; maintain architecture and protocol rationale in these documents. Retain all third-party legal notices.
 
 ## Architecture
 
@@ -61,6 +61,6 @@ Ride distance integrates original accepted speed samples, not thinned graph poin
 
 ## Public changes
 
-Use a focused branch for follow-up work. Keep protocol changes separate from visual changes when possible. Before publishing, inspect staged content and run `scripts/check_publication.py`. Add only source, resources, synthetic tests, build tooling and documentation; never force-add ignored files. Use a GitHub noreply author address. Preserve upstream attribution in `app/assets/licenses/` and the root license. New copied code requires compatible licensing and attribution.
+Use a focused branch for follow-up work. Keep protocol changes separate from visual changes when possible. Before publishing, inspect staged content and run `scripts/check_publication.py`. Add only source, resources, synthetic tests, build tooling, documentation and reviewed README images; never force-add ignored files. The publication checker pins each approved image under `docs/assets/` by SHA-256: review pixels and metadata before updating its hash. An image hash is an integrity check, not an automatic privacy review. Use a GitHub noreply author address. Preserve upstream attribution in `app/assets/licenses/` and the root license. New copied code requires compatible licensing and attribution.
 
 Document what changed, what was tested and any unverified hardware behavior. No local paths, rider anecdotes or session logs belong in a public commit or issue. The current test restriction on resistance is a known limitation, not a UI defect to remove without verification.
