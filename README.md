@@ -11,12 +11,23 @@
 </p>
 
 <p align="center">
-  <a href="#features">Features</a> · <a href="#build">Build</a> · <a href="#install-and-use">Install</a> · <a href="AGENTS.md">Developer guide</a>
+  <a href="#download">Download</a> · <a href="#features">Features</a> · <a href="#build">Build</a> · <a href="#install-and-use">Install</a> · <a href="AGENTS.md">Developer guide</a>
 </p>
 
 ![S22i Console dashboard with power, cadence, ride timer, resistance and incline controls](docs/assets/dashboard.png)
 
 <p align="center"><sub>Version 0.8.0 · Clean dashboard, disconnected · No personal ride data</sub></p>
+
+## Download
+
+| Build | Download | Intended use |
+| --- | --- | --- |
+| **Production — recommended** | [Download APK](https://github.com/isrish/s22i-console/releases/latest/download/s22i-console-release.apk) | Normal riding; Android debugging and diagnostic recording disabled |
+| Debug | [Download APK](https://github.com/isrish/s22i-console/releases/latest/download/s22i-console-debug.apk) | Development; Android debugging enabled, private diagnostics opt-in |
+
+[Release notes](https://github.com/isrish/s22i-console/releases/latest) · [SHA-256 checksums](https://github.com/isrish/s22i-console/releases/latest/download/SHA256SUMS.txt)
+
+Both APKs use the same app package and signing identity: installing one replaces the other while retaining app data. Debug builds allow an authorized ADB connection to access the app's private files. Use production for everyday riding. Compatibility and resistance-control limits below apply to both builds.
 
 ## Features
 
@@ -76,10 +87,14 @@ The default output is `build/s22i-console-release.apk`, signed, alignment-checke
 
 Enable USB debugging on your own console and authorize your computer. Select the intended device explicitly using `adb devices -l`, then set `S22I_SERIAL` locally to that device's serial or network endpoint.
 
+From the folder containing the downloaded production APK:
+
 ```sh
-adb -s "$S22I_SERIAL" install -r build/s22i-console-release.apk
+adb -s "$S22I_SERIAL" install -r s22i-console-release.apk
 adb -s "$S22I_SERIAL" shell am start -W -n dev.s22i.console/.MainActivity
 ```
+
+For a local source build, use `build/s22i-console-release.apk` instead. Updates require a matching signing identity; an independently signed build cannot replace the published APK directly.
 
 Tap **Connect bike** and grant USB access if prompted. Start a ride explicitly. Enable Android's display-over-other-apps permission to use the floating panel. The panel can be expanded with an edge swipe and folded with its end arrow. **End ride** remains available while riding in another app.
 
