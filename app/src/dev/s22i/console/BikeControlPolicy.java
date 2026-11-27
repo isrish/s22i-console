@@ -12,8 +12,6 @@ public final class BikeControlPolicy {
     public static final int RESISTANCE_RAW_STEP = 10000 / RESISTANCE_MAX;
     public static final int RESISTANCE_RAW_MIN = RESISTANCE_RAW_STEP - 1;
     public static final int RESISTANCE_RAW_MAX = RESISTANCE_MAX * RESISTANCE_RAW_STEP - 1;
-    private static final byte[] GEAR_ONE = {0, 0, 0x27, 1, 1, 7, 0x21, 0x19};
-    private static final byte[] GEAR_TWO = {0, 0, 0x27, 1, 2, 7, 0x20, 0x19};
 
     private BikeControlPolicy() { }
 
@@ -26,20 +24,22 @@ public final class BikeControlPolicy {
         public final int fieldId;
         public final double value;
         public final Encoding encoding;
+        public final int gearLimit;
         private final byte[] sourceGearProfile;
         private final byte[] expectedGearProfile;
 
         private Target(Kind kind, int fieldId, double value, Encoding encoding) {
-            this(kind, fieldId, value, encoding, null, null);
+            this(kind, fieldId, value, encoding, null, null, 0);
         }
 
         private Target(Kind kind, int fieldId, double value, Encoding encoding,
-                       byte[] sourceGearProfile, byte[] expectedGearProfile) {
+                       byte[] sourceGearProfile, byte[] expectedGearProfile, int gearLimit) {
             this.kind = kind;
             this.equipmentId = EQUIPMENT_ID;
             this.fieldId = fieldId;
             this.value = value;
             this.encoding = encoding;
+            this.gearLimit = gearLimit;
             this.sourceGearProfile = sourceGearProfile == null ? null : sourceGearProfile.clone();
             this.expectedGearProfile = expectedGearProfile == null ? null : expectedGearProfile.clone();
         }
@@ -53,23 +53,57 @@ public final class BikeControlPolicy {
     }
 
     public static Integer observedGearLevel(byte[] profile) {
-        if (Arrays.equals(profile, GEAR_ONE)) return 1;
-        if (Arrays.equals(profile, GEAR_TWO)) return 2;
-        return null;
+        return observedGearLevel(profile, 2);
+    }
+
+    public static Integer observedGearLevel(byte[] profile, int limit) {
+        if (!validGearLimit(limit) || profile == null || profile.length != 8) return null;
+        int level = profile[4] & 255;
+        if (level < 1 || level > limit) return null;
+        return Arrays.equals(profile, gearProfile(level)) ? level : null;
+    }
+
+    private static byte[] gearProfile(int level) {
+        return new byte[]{0, 0, 0x27, 1, (byte) level, 7, (byte) (0x22 - level), 0x19};
+    }
+
+    public static boolean validGearLimit(int limit) {
+        return limit == 2 || limit == 3 || limit == 8 || limit == 16 || limit == 24;
+    }
+
+    public static void validateGearTestSetup(int equipmentId, Double mode, Double cadence,
+            Integer maximum, byte[] profile, long sampledAt, long now, int limit) throws Rejected {
+        validateContext(equipmentId, sampledAt, now, 1);
+        if (!validGearLimit(limit)) throw new Rejected("Choose a supported resistance test ceiling.");
+        if (requireFinite(mode, "workout mode") != 1 || requireFinite(cadence, "cadence") != 0) {
+            throw new Rejected("End the ride and stop pedaling before changing the resistance test range.");
+        }
+        if (maximum == null || maximum != RESISTANCE_MAX) throw new Rejected("The reported resistance maximum must be 24.");
+        Integer level = observedGearLevel(profile, 24);
+        if (level == null || (limit > 2 && level > limit)) {
+            throw new Rejected("Use a recognized resistance level within the selected test range first.");
+        }
     }
 
     public static Target gearStep(int equipmentId, byte[] currentProfile, Double mode, Double erg,
                                   long sampledAtElapsedMs, long nowElapsedMs, int direction) throws Rejected {
+        return gearStep(equipmentId, currentProfile, mode, erg, sampledAtElapsedMs, nowElapsedMs, direction, 2, 24);
+    }
+
+    public static Target gearStep(int equipmentId, byte[] currentProfile, Double mode, Double erg,
+            long sampledAtElapsedMs, long nowElapsedMs, int direction, int limit, Integer maximum) throws Rejected {
         validateContext(equipmentId, sampledAtElapsedMs, nowElapsedMs, direction);
+        if (!validGearLimit(limit)) throw new Rejected("Choose a supported resistance test ceiling.");
+        if (maximum == null || maximum != RESISTANCE_MAX) throw new Rejected("The reported resistance maximum must be 24.");
         if (requireFinite(mode, "workout mode") != 2) throw new Rejected("Resistance level changes require a running ride.");
         if (requireFinite(erg, "ERG mode") != 0) throw new Rejected("Resistance level changes require ERG mode to be off.");
         byte[] source = currentProfile == null ? null : currentProfile.clone();
-        Integer current = observedGearLevel(source);
+        Integer current = observedGearLevel(source, limit);
         if (current == null) throw new Rejected("Resistance data is outside the supported resistance test profiles.");
         int target = current + direction;
-        if (target < 1 || target > 2) throw new Rejected("Resistance level is already at the app test limit of 1–2.");
+        if (target < 1 || target > limit) throw new Rejected("Resistance level is already at the app test limit of 1–" + limit + ".");
         return new Target(Kind.GEAR, 26, target, Encoding.GEAR_PROFILE, source,
-                target == 1 ? GEAR_ONE : GEAR_TWO);
+                gearProfile(target), limit);
     }
 
     public static Target resistanceStep(int equipmentId, Double currentLevel, Integer reportedMax,

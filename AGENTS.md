@@ -2,7 +2,7 @@
 
 ## Start here
 
-Read `README.md`, `CONTRIBUTING.md`, `docs/PROTOCOL.md`, `app/AndroidManifest.xml`, then the files relevant to the change. This is a native Java Android app, not a web app or Gradle project. Package `dev.s22i.console`, version 0.8.0, minimum and target API 28; compilation uses SDK 34. Python scripts invoke the Android build tools directly.
+Read `README.md`, `CONTRIBUTING.md`, `docs/PROTOCOL.md`, `app/AndroidManifest.xml`, then the files relevant to the change. This is a native Java Android app, not a web app or Gradle project. Package `dev.s22i.console`, development version 0.9.0-test1 (public stable release 0.8.0), minimum and target API 28; compilation uses SDK 34. Python scripts invoke the Android build tools directly.
 
 The repository is the public source distribution. Never depend on excluded local inventories, logs, experiment notes or signing keys. Do not commit personal paths, network addresses, device serials, authentication material, actual ride records, screenshots of user activity or downloaded APKs. README artwork and screenshots of empty state or synthetic sample previews are permitted after visual and metadata review. Source files intentionally contain no explanatory comments; maintain architecture and protocol rationale in these documents. Retain all third-party legal notices.
 
@@ -43,7 +43,7 @@ Tests are pure Java and Python with synthetic inputs and no Android hardware dep
 ## Controller invariants
 
 - The bike uses magnetic resistance; internal `Gear` names refer to protocol field 26.
-- App resistance writes remain limited to levels 1 and 2. Displayed levels and diagnostic profiles must never expand that policy implicitly.
+- App resistance writes default to levels 1 and 2. The development build permits explicit, session-only test ceilings of 3, 8, 16 and 24 after fresh idle, zero-cadence and reported-maximum checks. Displayed levels and diagnostic profiles must never expand that policy implicitly. Keep experimental builds separate from stable releases until supervised hardware validation.
 - Require fresh validated controller state and explicit user actions. Connection never starts a ride.
 - Validate the complete frame and its request/equipment binding. Unknown or malformed values stay unavailable.
 - Never automatically retry actuator writes, restore a resistance level, or introduce calibration/reset/firmware commands.

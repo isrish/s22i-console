@@ -27,12 +27,14 @@ with tempfile.TemporaryDirectory(prefix="s22i-protocol-") as output:
         str(root / "tests/java/dev/s22i/console/FitProAuthenticationTest.java"),
         str(root / "tests/java/dev/s22i/console/RideInitializationTest.java"),
         str(root / "tests/java/dev/s22i/console/BikeControlPolicyTest.java"),
+        str(root / "tests/java/dev/s22i/console/ResistanceRangeTest.java"),
         str(root / "tests/java/dev/s22i/console/ControllerDiagnosticsTest.java"),
     ], check=True, timeout=30)
     subprocess.run([str(java_bin / "java"), "-cp", output, "dev.s22i.console.FitProTest"], check=True, timeout=30)
     subprocess.run([str(java_bin / "java"), "-cp", output, "dev.s22i.console.FitProAuthenticationTest"], check=True, timeout=30)
     subprocess.run([str(java_bin / "java"), "-cp", output, "dev.s22i.console.RideInitializationTest"], check=True, timeout=30)
     subprocess.run([str(java_bin / "java"), "-cp", output, "dev.s22i.console.BikeControlPolicyTest"], check=True, timeout=30)
+    subprocess.run([str(java_bin / "java"), "-cp", output, "dev.s22i.console.ResistanceRangeTest"], check=True, timeout=30)
     subprocess.run([str(java_bin / "java"), "-cp", output, "dev.s22i.console.ControllerDiagnosticsTest"], check=True, timeout=30)
 
     subprocess.run([str(java_bin / "java"), "-cp", output, "dev.s22i.console.RideHistoryTest"], check=True, timeout=30)

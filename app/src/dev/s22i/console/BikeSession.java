@@ -47,6 +47,7 @@ public final class BikeSession {
         public final boolean rideOwned;
         public final Integer testGear;
         public final boolean gearControlsEnabled;
+        public final int gearLimit;
         public final String gearMessage;
         public final String controllerDiagnostic;
         public final String controllerIssue;
@@ -57,7 +58,7 @@ public final class BikeSession {
         State(boolean running, String title, String detail, Map<Integer, Double> values,
               Integer maxResistance, long sampledAt, int equipmentId, Set<Integer> supportedFields,
               boolean controlsEnabled, boolean controlPending, String controlMessage, boolean rideOwned,
-              Integer testGear, boolean gearControlsEnabled, String gearMessage,
+              Integer testGear, boolean gearControlsEnabled, int gearLimit, String gearMessage,
               ControllerDiagnostics.Snapshot diagnostic) {
             this.running = running;
             this.title = title;
@@ -74,6 +75,7 @@ public final class BikeSession {
             this.rideOwned = rideOwned;
             this.testGear = testGear;
             this.gearControlsEnabled = gearControlsEnabled;
+            this.gearLimit = gearLimit;
             this.gearMessage = gearMessage;
             this.controllerDiagnostic = diagnostic.controllerDiagnostic;
             this.controllerIssue = diagnostic.controllerIssue;
@@ -104,6 +106,7 @@ public final class BikeSession {
     private int exchanges;
     private volatile boolean controlsEnabled;
     private volatile boolean gearWritesBlocked;
+    private volatile int gearLimit = 2;
     private byte[] lastGearProfile;
     private String gearMessage = "App resistance test · levels 1–2 only";
     private volatile boolean controlBusy;
@@ -126,7 +129,13 @@ public final class BikeSession {
     private volatile boolean endingRide;
     private long cleanupDeadline;
     private String controlMessage = "Manual controls are off.";
-    private enum Action { START_RIDE, END_RIDE, RESISTANCE_UP, RESISTANCE_DOWN, INCLINE_UP, INCLINE_DOWN }
+    private enum Action {
+        START_RIDE, END_RIDE, RESISTANCE_UP, RESISTANCE_DOWN, INCLINE_UP, INCLINE_DOWN,
+        TEST_LIMIT_2(2), TEST_LIMIT_3(3), TEST_LIMIT_8(8), TEST_LIMIT_16(16), TEST_LIMIT_24(24);
+        final int testLimit;
+        Action() { this(0); }
+        Action(int testLimit) { this.testLimit = testLimit; }
+    }
 
     public BikeSession(Context context, UsbDevice device, Listener listener) {
         this.context = context.getApplicationContext();
@@ -152,6 +161,11 @@ public final class BikeSession {
 
     public boolean isClosed() { return closed; }
 
+    public boolean configureResistanceTest(int limit) {
+        for (Action action : Action.values()) if (action.testLimit == limit && limit > 0) return enqueue(action);
+        return false;
+    }
+
     public boolean startRide() { return enqueue(Action.START_RIDE); }
     public boolean endRide() { return enqueue(Action.END_RIDE); }
     public boolean stepResistance(int direction) {
@@ -173,7 +187,8 @@ public final class BikeSession {
         if (action == Action.START_RIDE && rideOwned) return false;
         if (controlBusy) return false;
         if (pendingAction != null || inclineInProgress != null) return false;
-        if (action != Action.START_RIDE && !controlsEnabled) return false;
+        if (action.testLimit > 0 && (rideOwned || gearWritesBlocked || cleaningUp || endingRide)) return false;
+        if (action != Action.START_RIDE && action.testLimit == 0 && !controlsEnabled) return false;
         if ((action == Action.RESISTANCE_UP || action == Action.RESISTANCE_DOWN)
                 && (gearWritesBlocked || !rideOwned)) return false;
         pendingAction = action;
@@ -185,7 +200,7 @@ public final class BikeSession {
             closed = true;
             State state = new State(false, "USB connection is closing", "Try connecting again in a moment.",
                     Collections.emptyMap(), null, 0, -1, Collections.emptySet(), false, false, "Controls off.", false,
-                    null, false, "App resistance test unavailable",
+                    null, false, 2, "App resistance test unavailable",
                     ControllerDiagnostics.describe(false, null, 0, SystemClock.elapsedRealtime(),
                             ControllerDiagnostics.Issue.USB_UNAVAILABLE, "USB connection is closing.", null));
             main.post(() -> { if (!stopped || !state.running) listener.onState(state); });
@@ -573,7 +588,10 @@ public final class BikeSession {
         try {
             long sampled;
             BikeControlPolicy.Target target;
-            if (action == Action.START_RIDE) {
+            if (action.testLimit > 0) {
+                if (configureGearRange(action.testLimit)) actionFailure.confirmed();
+                return;
+            } else if (action == Action.START_RIDE) {
                 if (!fields.contains(1) || !fields.contains(2) || !fields.contains(17)
                         || values.get(27) == null || values.get(28) == null
                         || values.get(27) != 20.0 || values.get(28) != -10.0) {
@@ -667,12 +685,36 @@ public final class BikeSession {
         }
     }
 
+    private boolean configureGearRange(int limit) throws Exception {
+        if (rideOwned || cleaningUp || endingRide || gearWritesBlocked) throw new BikeControlPolicy.Rejected("End the ride and reconnect before changing the test range.");
+        for (int field : new int[]{5, 12, 26, 42, 119}) {
+            if (!fields.contains(field)) throw new BikeControlPolicy.Rejected("Required resistance test fields are unavailable.");
+        }
+        long sampled = SystemClock.elapsedRealtime();
+        Double mode = readControlValue(12);
+        Double cadence = readControlValue(5);
+        Double maximum = readControlValue(42);
+        FitPro.Response profile = exchangeGear(FitPro.readField(2, 26), Long.MAX_VALUE);
+        if (profile == null) return false;
+        recordRawDiagnostic(26, profile);
+        if (gearWritesBlocked) return false;
+        Integer confirmedMax = Double.valueOf(24).equals(maximum) ? 24 : null;
+        BikeControlPolicy.validateGearTestSetup(equipmentId, mode, cadence, confirmedMax,
+                profile.payload(), sampled, SystemClock.elapsedRealtime(), limit);
+        checkStopped();
+        gearLimit = limit;
+        maxResistance = confirmedMax;
+        gearMessage = "App resistance test · levels 1–" + limit + " · this connection only";
+        controlMessage = "Test range selected. Start ride to test one level per tap.";
+        return true;
+    }
+
     private void handleGearControl(int direction) throws Exception {
         if (gearWritesBlocked || !rideOwned || !controlsEnabled) {
             controlMessage = "App resistance test is unavailable. End ride and incline remain separate controls.";
             return;
         }
-        if (!fields.contains(26) || !fields.contains(12) || !fields.contains(119)) {
+        if (!fields.contains(26) || !fields.contains(12) || !fields.contains(119) || !fields.contains(42)) {
             blockGearWrites("Required resistance test fields are not advertised.");
             return;
         }
@@ -680,12 +722,14 @@ public final class BikeSession {
         long sampled = SystemClock.elapsedRealtime();
         Double mode = readControlValue(12);
         Double erg = readControlValue(119);
+        Double maximum = readControlValue(42);
         FitPro.Response source = exchangeGear(FitPro.readField(2, 26), Long.MAX_VALUE);
         if (source == null) return;
         recordRawDiagnostic(26, source);
         if (gearWritesBlocked) return;
         BikeControlPolicy.Target target = BikeControlPolicy.gearStep(equipmentId, source.payload(), mode, erg,
-                sampled, SystemClock.elapsedRealtime(), direction);
+                sampled, SystemClock.elapsedRealtime(), direction, gearLimit,
+                Double.valueOf(24).equals(maximum) ? 24 : null);
         byte[] original = target.sourceGearProfile();
         byte[] expected = target.expectedGearProfile();
         log("GEAR_BEFORE direction=" + direction + " mode=" + mode + " erg=" + erg
@@ -728,7 +772,7 @@ public final class BikeSession {
             blockGearWrites("Fresh resistance readback did not reach the observed target profile.");
             return;
         }
-        gearMessage = "Resistance level " + (int) target.value + " confirmed · app test range 1–2";
+        gearMessage = "Resistance level " + (int) target.value + " confirmed · app test range 1–" + gearLimit;
         actionFailure.confirmed();
         controlMessage = gearMessage;
         log("GEAR_CONFIRMED target=" + (int) target.value + " before="
@@ -741,7 +785,7 @@ public final class BikeSession {
         diagnosticRawFields.put(field, raw);
         if (field == 26) {
             lastGearProfile = response.isDone() ? response.payload() : null;
-            if (BikeControlPolicy.observedGearLevel(lastGearProfile) == null) {
+            if (BikeControlPolicy.observedGearLevel(lastGearProfile, 24) == null) {
                 blockGearWrites("Resistance data is outside the supported resistance test profiles.");
             }
         }
@@ -927,7 +971,11 @@ public final class BikeSession {
     }
 
     private void publish(boolean running, String title, String detail) {
-        Integer testGear = BikeControlPolicy.observedGearLevel(lastGearProfile);
+        Integer testGear = BikeControlPolicy.observedGearLevel(lastGearProfile, gearLimit);
+        Integer fullRangeLevel = BikeControlPolicy.observedGearLevel(lastGearProfile, 24);
+        String rangeMessage = !gearWritesBlocked && testGear == null && fullRangeLevel != null
+                ? "Reported level is outside app range 1–" + gearLimit + ". Change the test range in Settings while idle."
+                : gearMessage;
         boolean gearAvailable = running && controlsEnabled && rideOwned && !gearWritesBlocked && testGear != null
                 && equipmentId == BikeControlPolicy.EQUIPMENT_ID
                 && Double.valueOf(2).equals(values.get(12)) && Double.valueOf(0).equals(values.get(119));
@@ -940,7 +988,7 @@ public final class BikeSession {
                 lastSampleAt, equipmentId, fields, controlsEnabled,
                 controlBusy || pendingAction != null || inclineInProgress != null,
                 actionFailure.controlMessage(controlMessage), rideOwned,
-                testGear, gearAvailable, gearMessage, diagnostic);
+                testGear, gearAvailable, gearLimit, rangeMessage, diagnostic);
         if (AppPrivacy.diagnostics(context)) try {
             JSONObject json = new JSONObject();
             json.put("running", running);

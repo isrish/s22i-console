@@ -64,6 +64,7 @@ public final class MainActivity extends ConsoleActivity {
     private Button overlayButton;
     private TextView distanceValue;
     private TextView rideTimeValue, rideTimeCaption;
+    private TextView gearLimitHint;
     private Button summaryButton;
     private final Runnable serviceChanged = () -> {
         if (!this.foreground || rideService == null) return;
@@ -555,6 +556,7 @@ public final class MainActivity extends ConsoleActivity {
         heading.addView(label(gear ? "Resistance" : "Incline", 23, WHITE, true),
                 new LinearLayout.LayoutParams(0, -2, 1));
         TextView hint = label(gear ? "APP TEST 1–2" : "0.5% / STEP", 12, gear ? LIME : MUTED, true);
+        if (gear) gearLimitHint = hint;
         hint.setLetterSpacing(0.06f);
         hint.setPadding(dp(12), dp(7), dp(12), dp(7));
         hint.setBackground(panel(gear ? Color.rgb(39, 48, 29) : SURFACE, BORDER, 10));
@@ -714,7 +716,8 @@ public final class MainActivity extends ConsoleActivity {
         setLabel(enableControlsButton, rideOwned ? "End ride" : "Start ride");
         enableControlsButton.setContentDescription(rideOwned ? "End ride" : "Start ride");
         enableControlsButton.setEnabled(rideOwned || (!state.controlPending && state.values.containsKey(2)));
-        setControlButtons(state.controlsEnabled && !state.controlPending, state.gearControlsEnabled, state.testGear);
+        setControlButtons(state.controlsEnabled && !state.controlPending, state.gearControlsEnabled, state.testGear, state.gearLimit);
+        setLabel(gearLimitHint, "APP TEST 1–" + state.gearLimit);
         boolean reportedInactiveMode = state.controllerMode != null
                 && (state.controllerMode == 12 || state.controllerMode == 14);
         boolean controllerNeedsAttention = reportedInactiveMode || (!"OK".equals(state.controllerIssue)
@@ -730,7 +733,7 @@ public final class MainActivity extends ConsoleActivity {
         setLabel(rawGearValue, "Reported resistance level: " + (state.observedGear == null ? "—" : state.observedGear)
                 + " · read only\nProtocol field 26: " + nonEmpty(state.gearProfile, "—"));
         setLabel(sessionDetails, state.equipmentId > 0
-                ? "Spin bike " + state.equipmentId + "  ·  App resistance test 1–2  ·  Incline −10% to +20%"
+                ? "Spin bike " + state.equipmentId + "  ·  App resistance test 1–" + state.gearLimit + "  ·  Incline −10% to +20%"
                 : "Identifying equipment");
     }
 
@@ -747,6 +750,7 @@ public final class MainActivity extends ConsoleActivity {
     }
 
     private void clearMetrics() {
+        if (gearLimitHint != null) setLabel(gearLimitHint, "APP TEST 1–2");
         for (TextView value : metricValues) if (value != null) setLabel(value, "—");
         if (rawResistanceValue != null) setLabel(rawResistanceValue, "Raw resistance: —");
         if (rawGearValue != null) setLabel(rawGearValue, "Reported resistance level: —\nProtocol field 26: —");
@@ -764,15 +768,15 @@ public final class MainActivity extends ConsoleActivity {
     }
 
     private void setControlButtons(boolean enabled) {
-        setControlButtons(enabled, false, null);
+        setControlButtons(enabled, false, null, 2);
     }
 
-    private void setControlButtons(boolean enabled, boolean gearEnabled, Integer gear) {
+    private void setControlButtons(boolean enabled, boolean gearEnabled, Integer gear, int limit) {
         for (int index = 0; index < controlButtons.length; index++) {
             Button button = controlButtons[index];
             if (button == null) continue;
             boolean available = enabled && (index >= 2 || (gearEnabled && gear != null
-                    && gear == (index == 0 ? 2 : 1)));
+                    && (index == 0 ? gear > 1 : gear < limit)));
             button.setEnabled(available);
             button.setAlpha(1f);
         }

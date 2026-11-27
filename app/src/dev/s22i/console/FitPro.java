@@ -176,9 +176,10 @@ public final class FitPro {
             field = GRADE;
         } else if (target.encoding == BikeControlPolicy.Encoding.GEAR_PROFILE
                 && target.kind == BikeControlPolicy.Kind.GEAR && target.fieldId == 26
-                && (target.value == 1 || target.value == 2)) {
-            Integer sourceGear = BikeControlPolicy.observedGearLevel(target.sourceGearProfile());
-            Integer expectedGear = BikeControlPolicy.observedGearLevel(target.expectedGearProfile());
+                && BikeControlPolicy.validGearLimit(target.gearLimit)
+                && target.value >= 1 && target.value <= target.gearLimit) {
+            Integer sourceGear = BikeControlPolicy.observedGearLevel(target.sourceGearProfile(), target.gearLimit);
+            Integer expectedGear = BikeControlPolicy.observedGearLevel(target.expectedGearProfile(), target.gearLimit);
             if (sourceGear == null || expectedGear == null || expectedGear != target.value
                     || Math.abs(sourceGear - expectedGear) != 1) {
                 throw new IllegalArgumentException("Gear target must retain the verified source and expected profiles");
