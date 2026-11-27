@@ -9,7 +9,6 @@ public final class ResistanceRangeTest {
     public static void main(String[] args) throws Exception {
         profilesAndCorruption();
         adjacentStepsAndFrames();
-        setupGuards();
         writeGuards();
         System.out.println("ResistanceRangeTest: " + passed + " assertions passed");
     }
@@ -22,9 +21,8 @@ public final class ResistanceRangeTest {
         for (int level = 1; level <= 24; level++) {
             byte[] value = profile(level);
             check(BikeControlPolicy.observedGearLevel(value, 24) == level);
-            check(level <= 2 ? BikeControlPolicy.observedGearLevel(value) == level
-                    : BikeControlPolicy.observedGearLevel(value) == null);
-            for (int limit : new int[]{2, 3, 8, 16, 24}) {
+            check(BikeControlPolicy.observedGearLevel(value) == level);
+            for (int limit : new int[]{24}) {
                 Integer accepted = BikeControlPolicy.observedGearLevel(value, limit);
                 check(level <= limit ? accepted != null && accepted == level : accepted == null);
             }
@@ -41,14 +39,14 @@ public final class ResistanceRangeTest {
         for (byte[] invalid : new byte[][]{null, new byte[0], new byte[7], new byte[8], new byte[9]}) {
             check(BikeControlPolicy.observedGearLevel(invalid, 24) == null);
         }
-        for (int limit : new int[]{-1, 0, 1, 4, 7, 9, 17, 23, 25, 255}) {
+        for (int limit : new int[]{-1, 0, 1, 2, 3, 4, 7, 8, 9, 16, 17, 23, 25, 255}) {
             check(!BikeControlPolicy.validGearLimit(limit));
             check(BikeControlPolicy.observedGearLevel(profile(1), limit) == null);
         }
     }
 
     private static void adjacentStepsAndFrames() throws Exception {
-        for (int limit : new int[]{2, 3, 8, 16, 24}) {
+        for (int limit : new int[]{24}) {
             for (int level = 1; level <= 24; level++) {
                 for (int direction : new int[]{-1, 1}) {
                     final int current = level;
@@ -83,9 +81,10 @@ public final class ResistanceRangeTest {
         }
         check(FitPro.hex(FitPro.manualControl(step(23, 1, 24)).bytes()).equals(
                 "02 16 02 04 00 00 00 04 00 00 00 00 18 00 00 00 04 00 00 00 04 42"));
-        check(FitPro.hex(FitPro.manualControl(step(2, 1, 3)).bytes()).equals(
+        check(FitPro.hex(FitPro.manualControl(step(2, 1, 24)).bytes()).equals(
                 "02 16 02 04 00 00 00 04 00 00 00 00 03 00 00 00 04 00 00 00 04 2D"));
-        reject(() -> BikeControlPolicy.gearStep(8, profile(2), 2.0, 0.0, 10000, 10500, 1));
+        check(BikeControlPolicy.gearStep(8, profile(2), 2.0, 0.0, 10000, 10500, 1).value == 3);
+        reject(() -> BikeControlPolicy.gearStep(8, profile(24), 2.0, 0.0, 10000, 10500, 1));
         byte[] source = profile(23);
         BikeControlPolicy.Target target = BikeControlPolicy.gearStep(8, source, 2.0, 0.0, 10000, 10500, 1, 24, 24);
         source[4] = 1;
@@ -96,30 +95,8 @@ public final class ResistanceRangeTest {
         return BikeControlPolicy.gearStep(8, profile(level), 2.0, 0.0, 10000, 10500, direction, limit, 24);
     }
 
-    private static void setupGuards() throws Exception {
-        for (int limit : new int[]{2, 3, 8, 16, 24}) {
-            BikeControlPolicy.validateGearTestSetup(8, 1.0, 0.0, 24, profile(1), 10000, 10500, limit);
-            passed++;
-            for (Double mode : new Double[]{null, Double.NaN, Double.POSITIVE_INFINITY, 0.0, 2.0, 3.0, 4.0, 10.0}) {
-                reject(() -> BikeControlPolicy.validateGearTestSetup(8, mode, 0.0, 24, profile(1), 10000, 10500, limit));
-            }
-            for (Double cadence : new Double[]{null, Double.NaN, Double.NEGATIVE_INFINITY, -1.0, 0.1, 1.0, 60.0}) {
-                reject(() -> BikeControlPolicy.validateGearTestSetup(8, 1.0, cadence, 24, profile(1), 10000, 10500, limit));
-            }
-            for (Integer maximum : new Integer[]{null, 0, 2, 23, 25, 255}) {
-                reject(() -> BikeControlPolicy.validateGearTestSetup(8, 1.0, 0.0, maximum, profile(1), 10000, 10500, limit));
-            }
-            reject(() -> BikeControlPolicy.validateGearTestSetup(7, 1.0, 0.0, 24, profile(1), 10000, 10500, limit));
-            reject(() -> BikeControlPolicy.validateGearTestSetup(8, 1.0, 0.0, 24, new byte[8], 10000, 10500, limit));
-            reject(() -> BikeControlPolicy.validateGearTestSetup(8, 1.0, 0.0, 24, profile(1), 10000, 12000, limit));
-        }
-        reject(() -> BikeControlPolicy.validateGearTestSetup(8, 1.0, 0.0, 24, profile(4), 10000, 10500, 3));
-        BikeControlPolicy.validateGearTestSetup(8, 1.0, 0.0, 24, profile(24), 10000, 10500, 2);
-        passed++;
-    }
-
     private static void writeGuards() throws Exception {
-        for (int limit : new int[]{3, 8, 16, 24}) {
+        for (int limit : new int[]{24}) {
             for (Integer maximum : new Integer[]{null, 0, 2, 23, 25, 255}) {
                 reject(() -> BikeControlPolicy.gearStep(8, profile(2), 2.0, 0.0, 10000, 10500, 1, limit, maximum));
             }
@@ -139,7 +116,6 @@ public final class ResistanceRangeTest {
         }
         for (int limit : new int[]{-1, 0, 1, 4, 25, 255}) {
             reject(() -> step(2, 1, limit));
-            reject(() -> BikeControlPolicy.validateGearTestSetup(8, 1.0, 0.0, 24, profile(1), 10000, 10500, limit));
         }
     }
 

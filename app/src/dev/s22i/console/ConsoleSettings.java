@@ -14,14 +14,12 @@ public final class ConsoleSettings {
         items.add("Auto-dim: " + (minutes == 0 ? "Never" : minutes + " minutes"));
         items.add("Summary date/time: " + (AppPrivacy.showDate(activity) ? "Shown" : "Hidden"));
         items.add("Delete saved rides…");
-        items.add("Resistance test range: 1–" + (service != null && service.state() != null ? service.state().gearLimit : 2));
         if (AppPrivacy.debug(activity)) items.add("Private diagnostic recording: " + (AppPrivacy.diagnostics(activity) ? "On" : "Off"));
         new AlertDialog.Builder(activity).setTitle("Settings")
                 .setItems(items.toArray(new String[0]), (dialog, which) -> {
                     if (which == 0) AutoDimSettings.show(activity);
                     else if (which == 1) dateSetting(activity);
                     else if (which == 2) confirmDelete(activity, service);
-                    else if (which == 3) resistanceTest(activity, service);
                     else diagnosticSetting(activity, service);
                 }).setNegativeButton("Close", null).show();
     }
@@ -31,29 +29,6 @@ public final class ConsoleSettings {
                 .setPositiveButton("Hide date/time", (d, w) -> AppPrivacy.setShowDate(activity, false))
                 .setNeutralButton("Show date/time", (d, w) -> AppPrivacy.setShowDate(activity, true))
                 .setNegativeButton("Cancel", null).show();
-    }
-    private static void resistanceTest(Activity activity, RideService service) {
-        BikeSession session = service == null ? null : service.session();
-        BikeSession.State state = service == null ? null : service.state();
-        if (session == null || state == null || !state.running || state.rideOwned || state.controlPending
-                || state.controllerMode == null || state.controllerMode != 1) {
-            Toast.makeText(activity, "Connect the bike and end the ride before selecting a test range.", Toast.LENGTH_LONG).show();
-            return;
-        }
-        int[] limits = {2, 3, 8, 16, 24};
-        String[] names = {"1–2: default", "1–3: first test", "1–8: lower range", "1–16: middle range", "1–24: full range"};
-        new AlertDialog.Builder(activity).setTitle("Supervised resistance test")
-                .setItems(names, (d, which) -> {
-                    int limit = limits[which];
-                    new AlertDialog.Builder(activity).setTitle("Use levels 1–" + limit + "?")
-                            .setMessage("Levels above 2 are being validated. Stay beside the bike, stop pedaling to select the range, then test one level per tap. Wait for each confirmation and end the ride if anything feels wrong. This setting resets when the bike connection closes.")
-                            .setNegativeButton("Cancel", null)
-                            .setPositiveButton("Use test range", (confirm, button) -> {
-                                boolean queued = service.session() == session && session.configureResistanceTest(limit);
-                                Toast.makeText(activity, queued ? "Checking the idle controller before enabling the range…"
-                                        : "Range not changed. End the ride and wait for the current action to finish.", Toast.LENGTH_LONG).show();
-                            }).show();
-                }).setNegativeButton("Cancel", null).show();
     }
     private static void confirmDelete(Activity activity, RideService service) {
         if (service == null || !service.canDeleteSavedRides()) {

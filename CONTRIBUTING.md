@@ -84,7 +84,7 @@ Reviewers should be able to assess the change without reading a chat transcript.
 
 ## Controller and privacy boundaries
 
-- Stable on-screen resistance writes are restricted to levels 1 and 2. Development builds offer explicit session-only test ceilings for supervised validation. Displayed levels and readback patterns must not silently expand the selected limit; tests do not establish physical behavior.
+- On-screen resistance supports levels 1–24 with one-level steps and fresh full-profile confirmation. Preserve these guards. Displayed levels alone must not authorize writes or imply compatibility with another controller revision.
 - Keep USB ownership, fresh-state checks, explicit user actions and ride recovery intact. Never automatically retry actuator writes or introduce reset, calibration or firmware commands as an incidental change.
 - Hardware checks require a person at the bike and an agreed test scope. Do not interrupt an active ride or present simulated results as hardware verification.
 - Keep personal paths, network addresses, serial numbers, credentials, real ride records, raw logs, downloaded APKs and signing keys out of commits, issues and PRs. The automated scanner cannot recognize every identifier.

@@ -227,7 +227,11 @@ public final class ControllerDiagnosticsTest {
         check(ControllerDiagnostics.observedGear(one) == 1);
         check(ControllerDiagnostics.observedGear(two) == 2);
         check(ControllerDiagnostics.observedGear(three) == 3);
-        check(BikeControlPolicy.observedGearLevel(three) == null);
+        check(BikeControlPolicy.observedGearLevel(three) == 3);
+        byte[] malformed = three.clone();
+        malformed[0] = 1;
+        check(ControllerDiagnostics.observedGear(malformed) == 3);
+        check(BikeControlPolicy.observedGearLevel(malformed) == null);
         check(ControllerDiagnostics.observedGear(new byte[8]) == 0);
         byte[] unsigned = new byte[8];
         unsigned[4] = (byte) 255;

@@ -51,9 +51,9 @@ The app has no Internet permission, analytics, accounts or cloud upload. Summary
 
 The current implementation targets Android 9 or later, a landscape console and the FitPro USB controller identified by vendor/product `213c:0002`, equipment type `8`. Compatibility with every S22i revision is not established.
 
-The bike uses magnetic resistance. `Gear` in internal protocol names refers to field 26, not a mechanical drivetrain. The app displays the reported resistance level, but **the published 0.8.0 release limits on-screen resistance adjustments to levels 1 and 2**. Wider readback support is not evidence that wider app writes are safe or correct. The interface retains its test-limit label. Physical handlebar controls operate through the controller.
+The bike uses magnetic resistance. `Gear` in internal protocol names refers to field 26, not a mechanical drivetrain. **Version 0.9.0 supports on-screen resistance levels 1–24**, one level per tap, with fresh controller checks and complete readback confirmation. The temporary test-range selector has been removed; reconnecting retains the full supported range without changing the bike's current resistance.
 
-Development version 0.9.0-test1 adds **Settings → Resistance test range**, with session-only ceilings of 3, 8, 16 and 24. It defaults to 1–2 and requires an idle bike with stopped pedals before changing the range. Adjustments remain one level per tap with full readback checks. Levels above 2 still require supervised hardware validation; this is not a stable full-range release. See [protocol boundaries](docs/PROTOCOL.md).
+Supervised app-button testing covered increases and decreases through the full range on the tested controller, with a rider-confirmed physical resistance change. This does not establish compatibility with every S22i revision or calibrated power accuracy. Older 0.8.0 downloads remain limited to levels 1–2. See [protocol boundaries](docs/PROTOCOL.md).
 
 Connection alone does not start a workout. Manual adjustments require fresh validated state, and actuator writes are never automatically retried. Read [protocol constraints](docs/PROTOCOL.md) before changing controller code.
 

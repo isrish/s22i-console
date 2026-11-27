@@ -165,7 +165,7 @@ public final class BikeControlPolicyTest {
             if (!constructor.isSynthetic()) check(java.lang.reflect.Modifier.isPrivate(constructor.getModifiers()));
         }
         reject(() -> BikeControlPolicy.gearStep(8, one, 2.0, 0.0, SAMPLE, NOW, -1));
-        reject(() -> BikeControlPolicy.gearStep(8, two, 2.0, 0.0, SAMPLE, NOW, 1));
+        check(BikeControlPolicy.gearStep(8, two, 2.0, 0.0, SAMPLE, NOW, 1).value == 3);
         for (byte[] invalid : new byte[][] {null, new byte[0], new byte[7], new byte[8], new byte[9],
                 new byte[] {0, 0, 0, 0, 1, 0, 0, 0}, new byte[] {0, 0, 0x27, 1, 3, 7, 0x21, 0x19}}) {
             check(BikeControlPolicy.observedGearLevel(invalid) == null);

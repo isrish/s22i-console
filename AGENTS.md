@@ -2,7 +2,7 @@
 
 ## Start here
 
-Read `README.md`, `CONTRIBUTING.md`, `docs/PROTOCOL.md`, `app/AndroidManifest.xml`, then the files relevant to the change. This is a native Java Android app, not a web app or Gradle project. Package `dev.s22i.console`, development version 0.9.0-test1 (public stable release 0.8.0), minimum and target API 28; compilation uses SDK 34. Python scripts invoke the Android build tools directly.
+Read `README.md`, `CONTRIBUTING.md`, `docs/PROTOCOL.md`, `app/AndroidManifest.xml`, then the files relevant to the change. This is a native Java Android app, not a web app or Gradle project. Package `dev.s22i.console`, version 0.9.0, minimum and target API 28; compilation uses SDK 34. Python scripts invoke the Android build tools directly.
 
 The repository is the public source distribution. Never depend on excluded local inventories, logs, experiment notes or signing keys. Do not commit personal paths, network addresses, device serials, authentication material, actual ride records, screenshots of user activity or downloaded APKs. README artwork and screenshots of empty state or synthetic sample previews are permitted after visual and metadata review. Source files intentionally contain no explanatory comments; maintain architecture and protocol rationale in these documents. Retain all third-party legal notices.
 
@@ -43,7 +43,7 @@ Tests are pure Java and Python with synthetic inputs and no Android hardware dep
 ## Controller invariants
 
 - The bike uses magnetic resistance; internal `Gear` names refer to protocol field 26.
-- App resistance writes default to levels 1 and 2. The development build permits explicit, session-only test ceilings of 3, 8, 16 and 24 after fresh idle, zero-cadence and reported-maximum checks. Displayed levels and diagnostic profiles must never expand that policy implicitly. Keep experimental builds separate from stable releases until supervised hardware validation.
+- App resistance writes support levels 1–24, one adjacent level per explicit action, only with the recognized complete profile, equipment 8, fresh Running mode, ERG off and reported maximum 24. Supervised full-range testing applies to the tested controller; do not infer compatibility with every hardware revision.
 - Require fresh validated controller state and explicit user actions. Connection never starts a ride.
 - Validate the complete frame and its request/equipment binding. Unknown or malformed values stay unavailable.
 - Never automatically retry actuator writes, restore a resistance level, or introduce calibration/reset/firmware commands.
@@ -63,7 +63,7 @@ Ride distance integrates original accepted speed samples, not thinned graph poin
 
 Use a focused branch for follow-up work. Keep protocol changes separate from visual changes when possible. Before publishing, inspect staged content and run `scripts/check_publication.py`. Add only source, resources, synthetic tests, build tooling, documentation and reviewed README images; never force-add ignored files. The publication checker pins each approved image under `docs/assets/` by SHA-256: review pixels and metadata before updating its hash. An image hash is an integrity check, not an automatic privacy review. Use a GitHub noreply author address. Preserve upstream attribution in `app/assets/licenses/` and the root license. New copied code requires compatible licensing and attribution.
 
-Document what changed, what was tested and any unverified hardware behavior. No local paths, rider anecdotes or session logs belong in a public commit or issue. The current test restriction on resistance is a known limitation, not a UI defect to remove without verification.
+Document what changed, what was tested and any unverified hardware behavior. No local paths, rider anecdotes or session logs belong in a public commit or issue. Changes to resistance framing, bounds or controller compatibility require fresh verification.
 
 ## Downloadable releases
 
